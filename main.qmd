@@ -1,0 +1,218 @@
+---
+title: "Friendship Network - A Case Study"
+author: "Yun-Tsz Tsai, Xinyi Jiang"
+date: last-modified
+date-format: "MMMM DD, YYYY"
+format: pdf
+editor: visual
+crossref:
+  fig-title: '**Figure**'
+  fig-labels: arabic
+  title-delim: "**.**"
+---
+
+# Introduction
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| include: false
+
+library(network)		# network data storage
+library(sna)			# network analysis routines
+library(latticeExtra)	# for nicer convergence & gof plots
+library(ergm)			# fitting & evaluating ERGMs
+library(igraph)
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| include: false
+
+library(qgraph)
+library(ggplot2)
+library(glue)
+# pre-processing
+load("Pair3N.RData")
+friendship <- network(fri)
+G_fri <- graph_from_adjacency_matrix(fri) # directed 
+fri_stat <- centrality(G_fri)
+# add attributes to the nodes
+friendship %v% 'gender' <- fem
+friendship %v% 'gender.color' <- c('lightblue', 'pink')[fem + 1]
+sch_normal <- (sch - mean(sch)) / sd(sch) + 4.5
+friendship %v% 'school' <- sch
+
+# set up parameters for the graph
+set.seed(123)
+pos <- plot(friendship)
+
+```
+
+```{r}
+#| fig.align: center
+#| fig-cap: 'Visualization of Friendship Network by Gender'
+#| label: network-gender
+#| message: false
+#| warning: false
+#| echo: false
+
+plot(friendship, vertex.cex= sch_normal, vertex.col= 'gender.color',
+     coord = pos)
+```
+
+```{r}
+#| fig-width: 4
+#| fig-height: 3
+#| label: histogram
+#| fig-cap: "Distribution of Degrees"
+#| fig-subcap: 
+#|   - "Out"
+#|   - "In"
+#| layout: [[45,-5 ,45]]
+#| message: false
+#| warning: false
+#| echo: false
+
+# Q4
+# histogram
+
+df_out <- data.frame(fri_stat$OutDegree) 
+ggplot(df_out, aes(x = fri_stat.OutDegree)) +
+  geom_histogram(binwidth = 1, fill = "lightblue") +
+  theme_light() +
+  xlab('Out-Degree') +
+  ylab('Count') +
+  xlim(c(0, 10)) +
+  ylim(c(0, 8))
+
+df_in <- data.frame(fri_stat$InDegree) 
+ggplot(df_in, aes(x = fri_stat.InDegree)) +
+  geom_histogram(binwidth = 1, fill = "lightblue") +
+  theme_light() +
+  xlab('In-Degree') +
+  ylab('Count') +
+  xlim(c(0, 10)) +
+  ylim(c(0, 8))
+
+# transitivity 
+print(glue('Transitivity in this network is {round(gden(friendship), 2)}'))
+```
+
+# Model Specification
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| fig.align: center
+#| tbl-cap: 'Results from ERGM Models'
+#| label: tbl-models
+library(texreg) # for showing ascII tables
+library(kableExtra)
+library(gtsummary)
+library(gt)
+# Q5
+# full model
+model_full <- ergm(friendship ~ edges + mutual + 
+                    nodematch('gender') + gwesp(0.7,fixed=TRUE) +
+                    twopath + gwidegree(0.7, fixed=TRUE))
+# no closure tendencies 
+model_noc <- ergm(friendship ~ edges + mutual + 
+                    nodematch('gender') + 
+                    gwidegree(0.7, fixed=TRUE))
+
+# no Matthew effect 
+model_matthew <- ergm(friendship ~ edges + mutual + nodematch('gender')+ gwesp(0.7,fixed=TRUE) + twopath)
+
+# null model
+model_nul <- ergm(friendship ~ edges + mutual + 
+                    nodematch('gender'))
+
+models <- list(model_full, model_noc, model_matthew, model_nul)
+# makeing a table
+# screenreg(models)
+new_names <- c('edges' = 'edges',
+               'mutual' = 'mutual',
+               'nodematch.gender' = 'homophily*',
+               'gwesp.OTP.fixed.0.7' = 'closure tend.*',
+               'twopath' = 'two path',
+               'gwideg.fixed.0.7' = 'preferential tend*')
+
+modelsummary::modelsummary(models,
+                           stars = c('*' = .05, '**' = 0.01,
+                                     '***' = 0.001),
+                           fmt = 2, exponentiate = TRUE,
+                           coef_map = new_names,
+                           notes = list("Figures based on authors'
+                           calculations.", "homophily* refers to 
+                           gender homophily.", 
+                                        "closure tend* = closure tendency"))
+
+```
+
+```         
+```
+
+# Simulation
+
+```{r}
+#| fig-width: 4
+#| fig-height: 3
+#| fig-cap: 
+#|   - "Empirical Network"
+#|   - "Simulations from Full Model"
+#|   - "Simulations without Closure"
+#|   - "Simulations without Matthew Effect"
+#|   - "Simulations from Null Model"
+#| layout: [[90], [45,-5 ,45], [45,-5 ,45]]
+#| label: empirical-sims
+#| message: false
+#| warning: false
+#| echo: false
+
+# empirical 
+# par(mfrow = c(1, 1), bg = 'cornsilk')
+plot(friendship, vertex.cex= sch_normal, vertex.col= 'gender.color',
+     coord = pos)
+
+# simulations
+ # full model
+# par(mfrow = c(1, 1), bg = 'white')
+sims_full <- simulate(model_full, nsim = 100, seed = 456)
+plot(sims_full[[1]], vertex.cex= sch_normal, 
+     vertex.col= 'gender.color', coord = pos)
+
+ # no closure
+sims_noc <- simulate(model_noc, nsim = 100, seed = 456)
+plot(sims_noc[[1]],  vertex.cex= sch_normal, 
+     vertex.col= 'gender.color', coord = pos)
+
+ # no Matthew effect
+sims_matthew <- simulate(model_matthew, nsim = 100, seed =456)
+plot(sims_matthew[[1]],  vertex.cex= sch_normal, 
+     vertex.col= 'gender.color', coord = pos)
+
+ # null model
+sims_nul <- simulate(model_nul, nsim = 100, seed = 456)
+plot(sims_nul[[1]],  vertex.cex= sch_normal, 
+     vertex.col= 'gender.color', coord = pos)
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+```
+
+```{r}
+#| include: false
+plot(density(gtrans(sims_full)), xlim=c(0, 0.4), main = 'transitivity index')
+lines(x = rep(gtrans(friendship), 2),
+	y = c(0, max(density(gtrans(sims_full))$y)),
+	col="red", lwd=2
+)
+```
