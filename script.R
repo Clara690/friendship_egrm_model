@@ -1,38 +1,9 @@
----
-title: "Friendship Network - A Case Study"
-author: "Yun-Tsz Tsai, Xinyi Jiang"
-date: last-modified
-date-format: "MMMM DD, YYYY"
-format: pdf
-editor: visual
-crossref:
-  fig-title: '**Figure**'
-  fig-labels: arabic
-  title-delim: "**.**"
-  tbl-title: '**Table**'
-  tbl-labels: arabic
----
-
-# Introduction
-
-```{r}
-#| message: false
-#| warning: false
-#| echo: false
-#| include: false
-
 library(network)		# network data storage
 library(sna)			# network analysis routines
 library(latticeExtra)	# for nicer convergence & gof plots
 library(ergm)			# fitting & evaluating ERGMs
 library(igraph)
-```
 
-```{r}
-#| message: false
-#| warning: false
-#| echo: false
-#| include: false
 
 library(qgraph)
 library(ggplot2)
@@ -52,35 +23,12 @@ friendship %v% 'school' <- sch
 set.seed(123)
 pos <- plot(friendship)
 
-```
 
-```{r}
-#| fig.align: center
-#| fig-cap: 'Visualization of Friendship Network by Gender'
-#| label: network-gender
-#| message: false
-#| warning: false
-#| echo: false
-
+# visualization of the network
 plot(friendship, vertex.cex= sch_normal, vertex.col= 'gender.color',
      coord = pos)
-```
 
-```{r}
-#| fig-width: 4
-#| fig-height: 3
-#| label: fig-histogram
-#| fig-cap: "Distribution of Degrees"
-#| fig-subcap: 
-#|   - "Out"
-#|   - "In"
-#| layout: [[45,-5 ,45]]
-#| message: false
-#| warning: false
-#| echo: false
-
-# Q4
-# histogram
+# histogram - distribution of degree
 
 df_out <- data.frame(fri_stat$OutDegree) 
 ggplot(df_out, aes(x = fri_stat.OutDegree)) +
@@ -102,14 +50,7 @@ ggplot(df_in, aes(x = fri_stat.InDegree)) +
 
 # transitivity 
 # print(glue('Transitivity in this network is {round(gden(friendship), 2)}'))
-```
 
-# Model Specification
-
-```{r}
-#| message: false
-#| warning: false
-#| echo: false
 
 library(texreg) # for showing ascII tables
 library(kableExtra)
@@ -118,8 +59,8 @@ library(gt)
 # Q5
 # full model
 model_full <- ergm(friendship ~ edges + mutual + 
-                    nodematch('gender') + gwesp(0.7,fixed=TRUE) +
-                    twopath + gwidegree(0.7, fixed=TRUE))
+                     nodematch('gender') + gwesp(0.7,fixed=TRUE) +
+                     twopath + gwidegree(0.7, fixed=TRUE))
 # no closure tendencies 
 model_noc <- ergm(friendship ~ edges + mutual + 
                     nodematch('gender') + 
@@ -141,15 +82,8 @@ new_names <- c('edges' = 'edges',
                'gwesp.OTP.fixed.0.7' = 'closure tend.*',
                'twopath' = 'two path',
                'gwideg.fixed.0.7' = 'preferential tend*')
-```
 
-```{r}
-#| message: false
-#| warning: false
-#| echo: false
-#| fig.align: center
-#| tbl-cap: 'Results from ERGM Models'
-#| label: tbl-models
+
 
 library(texreg) # for showing ascII tables
 library(modelsummary)
@@ -165,16 +99,16 @@ new_names <- c('edges' = 'edges',
 # make the table
 modelsummary(models, stars = c('*' = .05, '**' = 0.01, 
                                '***' = 0.001),
-                           fmt = 2, exponentiate = TRUE,
+             fmt = 2, exponentiate = TRUE,
              statistic = 'conf.int', 
              conf_level = .95, coef_map = new_names,
-                           output = 'gt') %>% 
-                tab_spanner(label = "Full",columns = '(1)') %>%
-                tab_spanner(label = md('No Clo<sup>1</sup>'),
-                            columns = '(2)') %>% 
-                tab_spanner(label = md("No Matt<sup>2</sup>"), 
-                            columns = '(3)') %>% 
-                tab_spanner(label = "Null",columns = '(4)') %>% 
+             output = 'gt') %>% 
+  tab_spanner(label = "Full",columns = '(1)') %>%
+  tab_spanner(label = md('No Clo<sup>1</sup>'),
+              columns = '(2)') %>% 
+  tab_spanner(label = md("No Matt<sup>2</sup>"), 
+              columns = '(3)') %>% 
+  tab_spanner(label = "Null",columns = '(4)') %>% 
   tab_header(title = 'Different Model Specification') %>% 
   tab_source_note(source_note = md('<sup>1</sup> No transitive closure tendencies ')) %>% 
   tab_source_note(source_note = md('<sup>2</sup> No Matthew effect') ) %>% 
@@ -184,27 +118,8 @@ modelsummary(models, stars = c('*' = .05, '**' = 0.01,
   tab_source_note(source_note = md("*Figures based on authors' calculation*")) %>% 
   tab_source_note(
     source_note = md('**Reference**: *Knecht, A. B. (2008). Friendship selection and friends influence. Dynamics of networks and actor attributes in early adolescence. PhD dissertation. Utrecht University*'
-  ))
-  
-```
+    ))
 
-# Simulation
-
-```{r}
-#| fig-width: 4
-#| fig-height: 3
-#| fig-cap: 'Visualization of Simulation'
-#| fig-subcap:
-#|   - "Empirical Network"
-#|   - "Full Model"
-#|   - "Without Closure"
-#|   - "Without Matthew Effect"
-#|   - "Null Model"
-#| layout: [[90], [45,-5 ,45], [45,-5 ,45]]
-#| label: fig-empirical-sims
-#| message: false
-#| warning: false
-#| echo: false
 
 # empirical 
 # par(mfrow = c(1, 1), bg = 'cornsilk')
@@ -212,38 +127,27 @@ plot(friendship, vertex.cex= sch_normal, vertex.col= 'gender.color',
      coord = pos)
 
 # simulations
- # full model
+# full model
 # par(mfrow = c(1, 1), bg = 'white')
 sims_full <- simulate(model_full, nsim = 100, seed = 456)
 plot(sims_full[[1]], vertex.cex= sch_normal, 
      vertex.col= 'gender.color', coord = pos)
 
- # no closure
+# no closure
 sims_noc <- simulate(model_noc, nsim = 100, seed = 456)
 plot(sims_noc[[1]],  vertex.cex= sch_normal, 
      vertex.col= 'gender.color', coord = pos)
 
- # no Matthew effect
+# no Matthew effect
 sims_matthew <- simulate(model_matthew, nsim = 100, seed =456)
 plot(sims_matthew[[1]],  vertex.cex= sch_normal, 
      vertex.col= 'gender.color', coord = pos)
 
- # null model
+# null model
 sims_nul <- simulate(model_nul, nsim = 100, seed = 456)
 plot(sims_nul[[1]],  vertex.cex= sch_normal, 
      vertex.col= 'gender.color', coord = pos)
-```
 
-```{r}
-#| fig-cap: 'Model Parameters'
-#| fig-subcap:
-#|   - 'Density'
-#|   - 'Transitivity'
-#| label: fig-parameter
-#| layout: [[37,-5 ,53]]
-#| message: false
-#| warning: false
-#| echo: false
 
 # density - empirical value vs. different models 
 par(mar = c(4, 4, 3, 9))
@@ -264,28 +168,13 @@ lines(density(gtrans(sims_matthew)), col = 'darkorchid1', lwd = 2)
 lines(density(gtrans(sims_nul)),col = 'aquamarine2', lwd = 2)
 abline(v = gtrans(friendship), lty = "dashed", lwd = 1.5)
 legend('topright', inset = c(-0.57, 0) ,legend = c('Full', 'No Closure', 'No Matthew',
-                              'Null'), col = c('deepskyblue', 'pink','darkorchid1', 'aquamarine2'), lwd = 2, xpd = TRUE)
-```
+                                                   'Null'), col = c('deepskyblue', 'pink','darkorchid1', 'aquamarine2'), lwd = 2, xpd = TRUE)
 
-# Goodness of Model Fit
 
-```{r}
-#| fig-cap: 'Overall Evaluation on No-Matthew-effect Model'
-#| fig-subcap:
-#|   - ''
-#|   - ''
-#|   - ''
-#|   - ''
-#|   - ''
-#| label: fig-gof
-#| layout-ncol: 2
-#| message: false
-#| warning: false
-#| echo: false
 
 # goodness of model fit
- # this is 
+# this is 
 fit_no_matthew <- gof(model_matthew, 
-                 control = control.gof.ergm(seed = 789, nsim=200))
+                      control = control.gof.ergm(seed = 789, nsim=200))
 plot(fit_no_matthew)
-```
+
