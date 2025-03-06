@@ -67,7 +67,7 @@ plot(friendship, vertex.cex= sch_normal, vertex.col= 'gender.color',
 ```{r}
 #| fig-width: 4
 #| fig-height: 3
-#| label: histogram
+#| label: fig-histogram
 #| fig-cap: "Distribution of Degrees"
 #| fig-subcap: 
 #|   - "Out"
@@ -99,7 +99,7 @@ ggplot(df_in, aes(x = fri_stat.InDegree)) +
   ylim(c(0, 8))
 
 # transitivity 
-print(glue('Transitivity in this network is {round(gden(friendship), 2)}'))
+# print(glue('Transitivity in this network is {round(gden(friendship), 2)}'))
 ```
 
 # Model Specification
@@ -154,22 +154,20 @@ modelsummary::modelsummary(models,
 
 ```
 
-```         
-```
-
 # Simulation
 
 ```{r}
 #| fig-width: 4
 #| fig-height: 3
-#| fig-cap: 
+#| fig-cap: 'Visualization of Simulation'
+#| fig-subcap:
 #|   - "Empirical Network"
-#|   - "Simulations from Full Model"
-#|   - "Simulations without Closure"
-#|   - "Simulations without Matthew Effect"
-#|   - "Simulations from Null Model"
+#|   - "Full Model"
+#|   - "Without Closure"
+#|   - "Without Matthew Effect"
+#|   - "Null Model"
 #| layout: [[90], [45,-5 ,45], [45,-5 ,45]]
-#| label: empirical-sims
+#| label: fig-empirical-sims
 #| message: false
 #| warning: false
 #| echo: false
@@ -203,16 +201,45 @@ plot(sims_nul[[1]],  vertex.cex= sch_normal,
 ```
 
 ```{r}
+#| fig-cap: 'Model Parameters'
+#| fig-subcap:
+#|   - 'Density'
+#|   - 'Transitivity'
+#| label: fig-parameter
+#| layout-ncol: 2
+#| fig.align: center
 #| message: false
 #| warning: false
 #| echo: false
+
+# density - empirical value vs. different models 
+par(mar = c(4, 4, 3, 9))
+plot(density(gden(sims_full)), col = 'deepskyblue', lwd = 2, 
+     main = '') 
+lines(density(gden(sims_noc)), col = 'pink', lwd = 2)
+lines(density(gden(sims_matthew)), col = 'darkorchid1', lwd = 2)
+lines(density(gden(sims_nul)), col = 'aquamarine2', lwd = 2)
+abline(v = gden(friendship), lty = "dashed", lwd = 1.5)
+legend('topright', inset = c(-0.57, 0) ,legend = c('Full', 'No Closure', 'No Matthew',
+                              'Null'), col = c('deepskyblue', 'pink','darkorchid1', 'aquamarine2'), lwd = 2, xpd = TRUE)
+# transitivity 
+par(mar = c(4, 4, 3, 9))
+plot(density(gtrans(sims_full)), ylim = c(0, 8), 
+     col = 'deepskyblue', lwd = 2, main = '')
+lines(density(gtrans(sims_noc)), col = 'pink', lwd = 2)
+lines(density(gtrans(sims_matthew)), col = 'darkorchid1', lwd = 2)
+lines(density(gtrans(sims_nul)),col = 'aquamarine2', lwd = 2)
+abline(v = gtrans(friendship), lty = "dashed", lwd = 1.5)
+legend('topright', inset = c(-0.57, 0) ,legend = c('Full', 'No Closure', 'No Matthew',
+                              'Null'), col = c('deepskyblue', 'pink','darkorchid1', 'aquamarine2'), lwd = 2, xpd = TRUE)
 ```
 
 ```{r}
 #| include: false
-plot(density(gtrans(sims_full)), xlim=c(0, 0.4), main = 'transitivity index')
-lines(x = rep(gtrans(friendship), 2),
-	y = c(0, max(density(gtrans(sims_full))$y)),
-	col="red", lwd=2
-)
+plot.new()
+plot(density(gden(sims_full)), main = 'network density')
+lines(x = rep(gden(friendship), 2),  
+      y = c(0, max(density(gden(sims_full))$y)),  
+      col = "red", lwd = 2)
+
 ```
